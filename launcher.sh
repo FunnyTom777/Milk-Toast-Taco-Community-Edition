@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 build_mtt() {
     mkdir -p out
     find Systems -name "*.java" > out/sources.txt
-    CP="out"
+    CP="out:UMML/out"
     for j in Libs/*.jar; do
         if [ -e "$j" ]; then
             CP="$CP:$j"
@@ -60,22 +60,22 @@ package_binary() {
     rm -rf "$STAGE"
     mkdir -p "$STAGE"
     echo "Creating jar..."
-    "$JAR" --create --file "$STAGE/mtt.jar" --main-class mtt.dev.DevConsole -C out .
+    "$JAR" --create --file "$STAGE/mtt.jar" --main-class mtt.dev.DevConsole -C out . -C UMML/out umml
     echo "Running jpackage..."
     "$JPKG" --type app-image --name "$APP_NAME" --input "$STAGE" --main-jar mtt.jar --dest "$DEST" --app-version 0.1.0
     echo "Done. Output in $DEST/$APP_NAME"
 }
 
 echo "=========================================="
-echo "  Building Milk Toast Taco Community Edition..."
-echo "=========================================="
-build_mtt
-
-echo ""
-echo "=========================================="
 echo "  Building UMML..."
 echo "=========================================="
 build_umml
+
+echo ""
+echo "=========================================="
+echo "  Building Milk Toast Taco Community Edition..."
+echo "=========================================="
+build_mtt
 
 while true; do
     clear 2>/dev/null || true
@@ -94,14 +94,14 @@ while true; do
     read CHOICE || break
     case "$CHOICE" in
         1)
-            CP="out"
+            CP="out:UMML/out"
             for j in Libs/*.jar; do
                 if [ -e "$j" ]; then CP="$CP:$j"; fi
             done
             java -cp "$CP" mtt.Main
             ;;
         2)
-            CP="out"
+            CP="out:UMML/out"
             for j in Libs/*.jar; do
                 if [ -e "$j" ]; then CP="$CP:$j"; fi
             done

@@ -202,17 +202,14 @@ public final class UMMLDashboard {
 
     static class SavesPanel extends JPanel {
         private final JTextField rootField = new JTextField();
-        private final DefaultListModel<String> versionModel = new DefaultListModel<>();
         private final DefaultListModel<String> slotModel = new DefaultListModel<>();
-        private final JList<String> versionList = new JList<>(versionModel);
         private final JList<String> slotList = new JList<>(slotModel);
         private final JLabel meta = new JLabel(" ");
         private final SaveEntryModel entryModel = new SaveEntryModel();
         private final JTable entryTable = new JTable(entryModel);
 
         private UMMLSaveSystem system;
-        private String currentVersion;
-        private String currentSlot;
+        private int currentSlot = 0;
 
         SavesPanel() {
             setLayout(new BorderLayout(6, 6));
@@ -248,14 +245,8 @@ public final class UMMLDashboard {
             });
             refresh.addActionListener(e -> refreshAll());
 
-            versionList.setVisibleRowCount(8);
-            slotList.setVisibleRowCount(8);
-            versionList.setBorder(BorderFactory.createTitledBorder("MTT versions"));
-            slotList.setBorder(BorderFactory.createTitledBorder("Save slots"));
-
-            versionList.addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting()) refreshSlots();
-            });
+            slotList.setVisibleRowCount(20);
+            slotList.setBorder(BorderFactory.createTitledBorder("Save slots (1-20)"));
             slotList.addListSelectionListener(e -> {
                 if (!e.getValueIsAdjusting()) loadSelectedSave();
             });
@@ -264,9 +255,9 @@ public final class UMMLDashboard {
             entryTable.setRowHeight(20);
             entryModel.setEditable(true);
 
-            JPanel left = new JPanel(new GridLayout(1, 2, 6, 6));
-            left.add(new JScrollPane(versionList));
-            left.add(new JScrollPane(slotList));
+            JPanel left = new JPanel(new BorderLayout(6, 6));
+            left.add(new JScrollPane(slotList), BorderLayout.CENTER);
+            left.add(new JLabel("Click a slot to inspect it."), BorderLayout.SOUTH);
 
             JPanel right = new JPanel(new BorderLayout(6, 6));
             JPanel rightTop = new JPanel(new BorderLayout(6, 6));
@@ -285,7 +276,7 @@ public final class UMMLDashboard {
 
             JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
             split.setResizeWeight(0.35);
-            split.setDividerLocation(360);
+            split.setDividerLocation(240);
 
             add(top, BorderLayout.NORTH);
             add(split, BorderLayout.CENTER);
@@ -293,43 +284,49 @@ public final class UMMLDashboard {
 
         private void refreshAll() {
             system = UMMLSaveSystem.open(rootField.getText().trim());
-            versionModel.clear();
-            slotModel.clear();
             entryModel.setRoot(null);
             meta.setText(" ");
-            currentVersion = null;
-            currentSlot = null;
-            for (String version : system.listVersions()) {
-                versionModel.addElement(version);
-            }
+            currentSlot = 0;
+            refreshSlots();
         }
 
         private void refreshSlots() {
-            currentVersion = versionList.getSelectedValue();
             slotModel.clear();
-            entryModel.setRoot(null);
-            meta.setText(" ");
-            currentSlot = null;
-            if (currentVersion == null || system == null) return;
-            for (String slot : system.listSaves(currentVersion)) {
-                slotModel.addElement(slot);
+            if (system == null) return;
+            for (int s = UMMLSaveSystem.MIN_SLOT; s <= UMMLSaveSystem.MAX_SLOT; s++) {
+                String text = "Slot " + s;
+                if (system.slotExists(s)) {
+                    UMMLSaveResult r = system.load(s);
+                    if (r.isSuccess()) {
+                        UMMLSaveData d = r.data();
+                        String name = d.has("playername") ? d.getString("playername", "?") : "";
+                        text += "  - " + (name.isEmpty() ? "used" : name);
+                    } else {
+                        text += "  - (unreadable)";
+                    }
+                }
+                slotModel.addElement(text);
             }
         }
 
         private void loadSelectedSave() {
-            currentSlot = slotList.getSelectedValue();
+            currentSlot = slotList.getSelectedIndex() + 1;
             entryModel.setRoot(null);
             meta.setText(" ");
-            if (currentVersion == null || currentSlot == null || system == null) return;
-            UMMLSaveResult result = system.load(currentVersion, currentSlot);
+            if (currentSlot < UMMLSaveSystem.MIN_SLOT || system == null) return;
+            if (!system.slotExists(currentSlot)) {
+                meta.setText("Slot " + currentSlot + " is empty.");
+                return;
+            }
+            UMMLSaveResult result = system.load(currentSlot);
             if (result.isFailure()) {
                 meta.setText("Error: " + result.error().message());
                 return;
             }
             UMMLSaveData data = result.data();
             entryModel.setRoot(data);
-            String path = system.root().resolve(currentVersion).resolve(currentSlot + ".xml").toAbsolutePath().normalize().toString();
-            meta.setText("Save: " + currentVersion + "/" + currentSlot
+            String path = system.root().resolve(currentSlot + ".xml").toAbsolutePath().normalize().toString();
+            meta.setText("Save: Slot " + currentSlot
                     + "   |   Saved by: " + (data.savedBy().isEmpty() ? "?" : data.savedBy())
                     + "   |   Saved at: " + (data.savedAt().isEmpty() ? "?" : data.savedAt())
                     + "\nFile: " + path);
@@ -337,53 +334,55 @@ public final class UMMLDashboard {
 
         private void newSave() {
             if (system == null) refreshAll();
-            String version = (String) JOptionPane.showInputDialog(this, "MTT version folder (e.g. MTTV41):",
-                    "New Save", JOptionPane.PLAIN_MESSAGE, null, null, currentVersion == null ? "MTTV41" : currentVersion);
-            if (version == null) return;
-            String slot = (String) JOptionPane.showInputDialog(this, "Save slot name:", "New Save",
-                    JOptionPane.PLAIN_MESSAGE, null, null, "Slot1");
-            if (slot == null) return;
+            int slot = system.nextFreeSlot();
+            if (slot == 0) {
+                showInfo(this, "New Save", "All " + UMMLSaveSystem.MAX_SLOT + " save slots are full. Delete one first.");
+                return;
+            }
             UMMLSaveData data = new UMMLSaveData();
             data.setSavedBy("UMML Dashboard");
             data.setString("playername", "New Player");
             data.setInt("money", 5000);
-            UMMLSaveResult result = system.save(version, slot, data);
+            UMMLSaveResult result = system.save(slot, data);
             if (result.isFailure()) {
                 showError(this, "New Save", result.error().toString());
                 return;
             }
             refreshAll();
-            int vIdx = versionModel.indexOf(version);
-            if (vIdx >= 0) versionList.setSelectedIndex(vIdx);
-            int sIdx = slotModel.indexOf(slot);
-            if (sIdx >= 0) slotList.setSelectedIndex(sIdx);
+            slotList.setSelectedIndex(slot - 1);
         }
 
         private void deleteSave() {
-            if (currentVersion == null || currentSlot == null) {
-                showInfo(this, "Delete Save", "Select a save first.");
+            if (currentSlot < UMMLSaveSystem.MIN_SLOT || system == null) {
+                showInfo(this, "Delete Save", "Select a save slot first.");
+                return;
+            }
+            if (!system.slotExists(currentSlot)) {
+                showInfo(this, "Delete Save", "Slot " + currentSlot + " is already empty.");
                 return;
             }
             int answer = JOptionPane.showConfirmDialog(this,
-                    "Delete " + currentVersion + "/" + currentSlot + ".xml?", "Delete Save",
+                    "Delete save slot " + currentSlot + "?", "Delete Save",
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             if (answer != JOptionPane.YES_OPTION) return;
-            UMMLSaveResult result = system.delete(currentVersion, currentSlot);
+            UMMLSaveResult result = system.delete(currentSlot);
             if (result.isFailure()) showError(this, "Delete Save", result.error().toString());
             refreshSlots();
+            loadSelectedSave();
         }
 
         private void saveChanges() {
-            if (currentVersion == null || currentSlot == null || entryModel.getRootData() == null) {
-                showInfo(this, "Save Changes", "Select a save first.");
+            if (currentSlot < UMMLSaveSystem.MIN_SLOT || system == null || entryModel.getRootData() == null) {
+                showInfo(this, "Save Changes", "Select a save slot first.");
                 return;
             }
-            UMMLSaveResult result = system.save(currentVersion, currentSlot, entryModel.getRootData());
+            UMMLSaveResult result = system.save(currentSlot, entryModel.getRootData());
             if (result.isFailure()) {
                 showError(this, "Save Changes", result.error().toString());
                 return;
             }
-            showInfo(this, "Save Changes", "Saved " + currentVersion + "/" + currentSlot);
+            showInfo(this, "Save Changes", "Saved slot " + currentSlot);
+            refreshSlots();
             loadSelectedSave();
         }
     }

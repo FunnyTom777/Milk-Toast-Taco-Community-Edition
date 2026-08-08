@@ -8,24 +8,24 @@ rem  Builds MTT and UMML, then lets you pick what to launch.
 rem ============================================================
 
 echo ==========================================
-echo   Building Milk Toast Taco Community Edition...
-echo ==========================================
-call :build_mtt
-if errorlevel 1 (
-    echo.
-    echo BUILD FAILED. See errors above.
-    pause
-    exit /b 1
-)
-
-echo.
-echo ==========================================
 echo   Building UMML...
 echo ==========================================
 call :build_umml
 if errorlevel 1 (
     echo.
     echo UMML BUILD FAILED. See errors above.
+    pause
+    exit /b 1
+)
+
+echo.
+echo ==========================================
+echo   Building Milk Toast Taco Community Edition...
+echo ==========================================
+call :build_mtt
+if errorlevel 1 (
+    echo.
+    echo BUILD FAILED. See errors above.
     pause
     exit /b 1
 )
@@ -63,7 +63,7 @@ for /r "Systems" %%F in (*.java) do (
     set "P=%%F"
     echo "!P:\=/!">>"out\sources.txt"
 )
-set "CP=out"
+set "CP=out;UMML\out"
 for %%J in ("Libs\*.jar") do set "CP=!CP!;%%J"
 javac -encoding UTF-8 --release 21 -cp "%CP%" -d "out" "@out\sources.txt"
 exit /b
@@ -92,7 +92,7 @@ rem ============================================================
 rem  Run the main game
 rem ============================================================
 :run_mtt
-set "CP=out"
+set "CP=out;UMML\out"
 for %%J in ("Libs\*.jar") do set "CP=!CP!;%%J"
 java -cp "%CP%" mtt.Main
 echo.
@@ -103,7 +103,7 @@ rem ============================================================
 rem  Launch the dev console in its own window
 rem ============================================================
 :run_dev
-set "CP=out"
+set "CP=out;UMML\out"
 for %%J in ("Libs\*.jar") do set "CP=!CP!;%%J"
 start "" javaw -cp "%CP%" mtt.dev.DevConsole
 echo Dev Console launched in a separate window.
@@ -169,7 +169,7 @@ set "APP_NAME=MilkToastTaco"
 if exist "%STAGE%" rmdir /s /q "%STAGE%"
 mkdir "%STAGE%"
 echo Creating jar...
-"%JAR%" --create --file "%STAGE%\mtt.jar" --main-class mtt.dev.DevConsole -C out .
+"%JAR%" --create --file "%STAGE%\mtt.jar" --main-class mtt.dev.DevConsole -C out . -C "UMML\out" umml
 if errorlevel 1 (
     echo Failed to create jar.
     exit /b 1

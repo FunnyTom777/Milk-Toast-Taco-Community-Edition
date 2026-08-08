@@ -51,6 +51,7 @@ The dev console is a Swing-based tool for testing game systems quickly. Pick **o
 
 - Type `/help` for all commands, `/help <command>` for usage
 - `/player`, `/inventory` to inspect state; `/setmoney`, `/addmoney`, `/takemoney`, `/giveitem`, `/rename`, `/newgame` to poke at it
+- UMML saves are wired straight in: `/save <slot>`, `/load <slot>`, `/saves`, `/savedelete <slot>`, `/saverename <old> <new>`, `/saveinfo <slot>`, `/savesystem`. Slots are numbered 1-20 and map to `saves/<slot>.xml`
 - Up/Down arrows recall command history, Tab autocompletes
 
 ## Packaging a Binary
@@ -71,7 +72,7 @@ UMML is compiled automatically every time you run `launcher.bat` / `launcher.sh`
 
 From the launcher menu: **option 3** opens the Swing dashboard (scan and inspect mods, browse and edit saves, run the self tests) and **option 4** runs the mod loading and save system self tests, then scans `MTT_Mods` and prints a report.
 
-To use UMML in MTT CE code, drop `UMML\lib\umml.jar` into `Libs\` (the game build automatically picks up every jar there) and `import umml.*`.
+To use UMML in MTT CE code, `import umml.*` - the launcher builds UMML first, then compiles and runs MTT with UMML on the classpath, so there is no manual jar copying needed. The packaged binary bundles the UMML classes too.
 
 ### Mod loading
 
@@ -99,7 +100,7 @@ Strict mode turns unresolved dependencies into a hard failure: `UMML.scan("MTT_M
 
 ### Save game system
 
-Saves **always** go to a `saves/` folder at the root of the project - `saves/<version>/<slot>.xml` - one subfolder per MTT CE version so versions never trample each other's saves. `UMMLSaveSystem.find()` finds the project root by walking up until it hits the `Systems/` source folder, then uses `saves/` under it. The `saves/` folder is gitignored, so saves are never uploaded.
+Saves **always** go to a `saves/` folder at the root of the project - `saves/<slot>.xml`. There are no version folders: Milk Toast Taco is just "MTT" (the MTTV39/40/41 version folders were an old idea and are gone). The game has **20 numbered save slots** (`UMMLSaveSystem.MIN_SLOT` to `MAX_SLOT`). `UMMLSaveSystem.find()` finds the project root by walking up until it hits the `Systems/` source folder, then uses `saves/` under it. The `saves/` folder is gitignored, so saves are never uploaded.
 
 Each save is a dynamic XML file - MTT CE can store any number of typed values plus nested groups, and UMML never has to know what the game saves:
 
@@ -109,7 +110,7 @@ import umml.UMMLSaveResult;
 import umml.UMMLSaveSystem;
 
 UMMLSaveData data = new UMMLSaveData();
-data.setSavedBy("MTTV40");
+data.setSavedBy("MTT Community Edition");
 data.setString("playername", "Bobby");
 data.setInt("money", 5000);
 data.setDouble("health", 87.5);
@@ -117,9 +118,9 @@ data.setBoolean("hasLicense", true);
 data.group("inventory").setString("item_0", "Wrench");
 
 UMMLSaveSystem saves = UMMLSaveSystem.find();   // project root / saves
-saves.save("MTTV40", "Slot1", data);            // writes saves/MTTV40/Slot1.xml
+saves.save(1, data);                            // writes saves/1.xml
 
-UMMLSaveResult result = saves.load("MTTV40", "Slot1");
+UMMLSaveResult result = saves.load(1);
 if (result.isSuccess()) {
     int money = result.data().getInt("money", 0);
 }

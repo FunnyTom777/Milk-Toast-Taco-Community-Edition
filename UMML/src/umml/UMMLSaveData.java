@@ -37,7 +37,7 @@ public class UMMLSaveData {
     // Header (written into the XML as attributes of the <save> root)
     // ========================================================================
 
-    /** Which MTT version (or tool) wrote this save, e.g. "MTTV41". */
+    /** Which MTT build or tool wrote this save, e.g. "MTT Community Edition". */
     public String savedBy() {
         return savedBy;
     }

@@ -10,8 +10,8 @@ import java.util.List;
  * Self test for the {@link UMMLSaveSystem}.
  *
  * Creates a temporary save root and verifies that:
- *   - versions and slots round-trip through XML (typed values + groups)
- *   - saves from different MTT Community Edition versions live in separate folders
+ *   - typed values and nested groups round-trip through XML
+ *   - the 1-20 slot system is enforced
  *   - load/delete/rename report clean failures instead of throwing
  *   - a corrupt save file produces a {@link UMMLError}, never a crash
  *
@@ -37,13 +37,15 @@ public final class UMMLSaveSystemTest {
         try {
             UMMLSaveSystem saves = UMMLSaveSystem.open(temp);
 
-            check("no version folders before ensure", !saves.versionExists("MTTV40"));
+            check("no slots before any save", saves.listSlots().isEmpty());
             check("ensureRoot succeeds", saves.ensureRoot().isSuccess());
             check("root exists after ensure", saves.exists());
+            check("first free slot is 1", saves.nextFreeSlot() == 1);
+            check("20 slots available", UMMLSaveSystem.MAX_SLOT - UMMLSaveSystem.MIN_SLOT + 1 == 20);
 
             // --- round trip: typed values and nested groups ---
             UMMLSaveData data = new UMMLSaveData();
-            data.setSavedBy("MTTV41");
+            data.setSavedBy("MTT Community Edition");
             data.setString("playername", "Bobby");
             data.setInt("money", 5000);
             data.setLong("totalkm", 123456789L);
@@ -54,16 +56,18 @@ public final class UMMLSaveSystemTest {
             data.group("inventory").setString("item_1", "Hammer");
             data.group("vehicles").setInt("owned", 2);
 
-            check("save succeeds", saves.save("MTTV40", "Slot1", data).isSuccess());
-            check("save file exists on disk",
-                    Files.isRegularFile(temp.resolve("MTTV40/Slot1.xml")));
-            check("slot listed", saves.listSaves("MTTV40").equals(List.of("Slot1")));
+            check("save to slot 1 succeeds", saves.save(1, data).isSuccess());
+            check("save file exists on disk", Files.isRegularFile(temp.resolve("1.xml")));
+            check("slot 1 listed", saves.listSlots().equals(List.of(1)));
+            check("slot 1 exists", saves.slotExists(1));
+            check("slot 2 not used", !saves.slotExists(2));
+            check("next free slot is 2", saves.nextFreeSlot() == 2);
 
-            UMMLSaveResult loaded = saves.load("MTTV40", "Slot1");
+            UMMLSaveResult loaded = saves.load(1);
             check("load succeeds", loaded.isSuccess());
             if (loaded.isSuccess()) {
                 UMMLSaveData d = loaded.data();
-                check("savedBy round trips", d.savedBy().equals("MTTV41"));
+                check("savedBy round trips", d.savedBy().equals("MTT Community Edition"));
                 check("savedAt auto-stamped", !d.savedAt().isEmpty());
                 check("string round trips", d.getString("playername", "").equals("Bobby"));
                 check("int round trips", d.getInt("money", 0) == 5000);
@@ -77,42 +81,47 @@ public final class UMMLSaveSystemTest {
                 check("second group round trips", d.getGroup("vehicles").getInt("owned", -1) == 2);
             }
 
-            // --- versions stay separate ---
+            // --- slots stay separate ---
             UMMLSaveData other = new UMMLSaveData();
             other.setString("playername", "Coop");
-            check("save to second version", saves.save("MTTV41", "Slot1", other).isSuccess());
-            check("two versions exist", saves.listVersions().equals(List.of("MTTV40", "MTTV41")));
-            check("versions do not share files",
-                    saves.listSaves("MTTV40").equals(List.of("Slot1"))
-                            && saves.listSaves("MTTV41").equals(List.of("Slot1")));
-            check("MTTV41 save has its own data",
-                    saves.load("MTTV41", "Slot1").data().getString("playername", "").equals("Coop"));
+            check("save to slot 2 succeeds", saves.save(2, other).isSuccess());
+            check("two slots in use", saves.listSlots().equals(List.of(1, 2)));
+            check("slot 1 keeps its own data",
+                    saves.load(1).data().getString("playername", "").equals("Bobby"));
+            check("slot 2 has its own data",
+                    saves.load(2).data().getString("playername", "").equals("Coop"));
 
             // --- failures never throw ---
-            check("load missing slot fails cleanly", saves.load("MTTV40", "Nope").isFailure());
-            check("delete missing slot fails cleanly", saves.delete("MTTV40", "Nope").isFailure());
-            check("load missing version fails cleanly", saves.load("MTTV99", "Slot1").isFailure());
-            check("invalid version name rejected",
-                    saves.ensureVersion("../evil").isFailure() || !saves.listVersions().contains("evil"));
-            check("invalid slot name rejected", saves.save("MTTV40", "../evil", new UMMLSaveData()).isFailure());
+            check("load empty slot fails cleanly", saves.load(3).isFailure());
+            check("delete empty slot fails cleanly", saves.delete(3).isFailure());
+            check("invalid slot 0 rejected", saves.save(0, new UMMLSaveData()).isFailure());
+            check("invalid slot 21 rejected", saves.save(21, new UMMLSaveData()).isFailure());
+            check("invalid slot -5 rejected", saves.load(-5).isFailure());
 
             // --- rename ---
-            check("rename succeeds", saves.rename("MTTV40", "Slot1", "Slot2").isSuccess());
-            check("old slot gone after rename", saves.listSaves("MTTV40").equals(List.of("Slot2")));
-            check("rename to existing slot rejected",
-                    saves.rename("MTTV40", "Slot2", "Slot2").isFailure());
+            check("rename slot 1 to 3 succeeds", saves.rename(1, 3).isSuccess());
+            check("old slot gone after rename", saves.listSlots().equals(List.of(2, 3)));
+            check("rename onto existing slot rejected", saves.rename(2, 3).isFailure());
+            check("rename to invalid slot rejected", saves.rename(3, 21).isFailure());
+
+            // --- fill all 20 slots ---
+            for (int s = 1; s <= 20; s++) {
+                check("fill slot " + s, saves.save(s, new UMMLSaveData()).isSuccess());
+            }
+            check("all 20 slots full", saves.nextFreeSlot() == 0);
+            check("20 slots listed", saves.listSlots().size() == 20);
 
             // --- corrupt file reported, not crashed ---
-            Files.writeString(temp.resolve("MTTV40/Broken.xml"), "<save><entry", StandardCharsets.UTF_8);
-            UMMLSaveResult broken = saves.load("MTTV40", "Broken");
+            Files.writeString(temp.resolve("3.xml"), "<save><entry", StandardCharsets.UTF_8);
+            UMMLSaveResult broken = saves.load(3);
             check("corrupt save fails cleanly", broken.isFailure());
             check("corrupt save reports XML_PARSE",
                     broken.error() != null && broken.error().type() == UMMLError.Type.XML_PARSE);
 
             // --- delete ---
-            check("delete succeeds", saves.delete("MTTV40", "Slot2").isSuccess());
-            check("slot removed after delete",
-                    saves.listSaves("MTTV40").equals(List.of("Broken")));
+            check("delete succeeds", saves.delete(3).isSuccess());
+            check("slot removed after delete", saves.listSlots().size() == 19 && !saves.listSlots().contains(3));
+            check("next free slot is 3 again", saves.nextFreeSlot() == 3);
 
         } finally {
             deleteTree(temp);

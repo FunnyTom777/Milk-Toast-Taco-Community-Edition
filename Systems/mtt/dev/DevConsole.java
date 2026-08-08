@@ -58,6 +58,7 @@ public class DevConsole extends JFrame {
         super("Milk Toast Taco Dev Console");
         setupWindow();
         registerBuiltinCommands();
+        SaveCommands.register(this);
         printHeader();
     }
 
@@ -291,6 +292,10 @@ public class DevConsole extends JFrame {
         return player;
     }
 
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
+
     private void printHeader() {
         printColored(HEADER_COLOR, "");
         printColored(HEADER_COLOR, "Milk Toast Taco Development Console");
@@ -319,6 +324,18 @@ public class DevConsole extends JFrame {
 
     public void printError(String text) {
         printColored(ERROR_COLOR, "[ERROR] " + text);
+    }
+
+    public void printInfo(String text) {
+        printColored(INFO_COLOR, text);
+    }
+
+    public void printHeader(String text) {
+        printColored(HEADER_COLOR, text);
+    }
+
+    public void printHighlight(String text) {
+        printColored(HIGHLIGHT_COLOR, text);
     }
 
     private class InputHandler extends KeyAdapter {

@@ -7,10 +7,8 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,22 +18,21 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * The save game system for Milk Toast Taco Community Edition.
  *
- * <p>Saves always live in a {@code saves} folder at the root of the
- * project (no more hunting through parent directories), one subdirectory
- * per MTT Community Edition version so different versions never trample
- * each other's saves:
+ * <p>Saves always live in a {@code saves} folder at the root of the project,
+ * one XML file per slot:
  *
  * <pre>
  * saves/
- *   MTTV39/  Slot1.xml  Slot2.xml
- *   MTTV40/  Slot1.xml
- *   MTTV41/
+ *   1.xml  2.xml  3.xml  ...  20.xml
  * </pre>
+ *
+ * <p>There are no version folders - Milk Toast Taco is just "MTT" (or MTT
+ * Community Edition). The MTTV39/40/41 version folders were an old idea and
+ * are gone; the game has 20 numbered save slots instead.
  *
  * <p>Each save is a dynamic XML file (see {@link UMMLSaveData}). Operations
  * never throw - they return a {@link UMMLSaveResult} that either carries the
@@ -43,7 +40,7 @@ import java.util.regex.Pattern;
  *
  * <pre>
  * UMMLSaveSystem saves = UMMLSaveSystem.find();
- * UMMLSaveResult result = saves.load("MTTV41", "Slot1");
+ * UMMLSaveResult result = saves.load(1);
  * if (result.isSuccess()) {
  *     UMMLSaveData data = result.data();
  *     int money = data.getInt("money", 0);
@@ -52,8 +49,11 @@ import java.util.regex.Pattern;
  */
 public class UMMLSaveSystem {
 
-    /** Version folder names must look like "MTTV40" (letters, digits, _ and - only). */
-    private static final Pattern NAME_OK = Pattern.compile("[A-Za-z0-9][A-Za-z0-9 _\\-]*");
+    /** The lowest usable save slot. */
+    public static final int MIN_SLOT = 1;
+
+    /** The highest usable save slot. */
+    public static final int MAX_SLOT = 20;
 
     private static final DateTimeFormatter TIMESTAMP = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -121,74 +121,43 @@ public class UMMLSaveSystem {
     }
 
     // ========================================================================
-    // Versions
+    // Slot listing
     // ========================================================================
 
     /**
-     * Every MTT version folder in the save root (e.g. MTTV39, MTTV40),
-     * sorted alphabetically. Never throws - an unreadable root yields an
-     * empty list.
+     * Every used slot (1-20), sorted ascending. Never throws - an unreadable
+     * root yields an empty list. Files that do not look like a numbered slot
+     * (e.g. {@code readme.txt}) are ignored.
      */
-    public List<String> listVersions() {
-        List<String> versions = new ArrayList<>();
-        if (!Files.isDirectory(root)) return versions;
+    public List<Integer> listSlots() {
+        List<Integer> slots = new ArrayList<>();
+        if (!Files.isDirectory(root)) return slots;
         try (var stream = Files.list(root)) {
-            stream.filter(Files::isDirectory)
-                    .forEach(p -> versions.add(p.getFileName().toString()));
-        } catch (IOException ignored) {
-            // report nothing - listVersions is best-effort
-        }
-        versions.sort(Comparator.naturalOrder());
-        return versions;
-    }
-
-    public boolean versionExists(String version) {
-        return Files.isDirectory(versionDir(version));
-    }
-
-    /**
-     * Creates (or re-uses) the folder for an MTT Community Edition version,
-     * e.g. {@code ensureVersion("MTTV41")} makes {@code saves/MTTV41}.
-     */
-    public UMMLSaveResult ensureVersion(String version) {
-        UMMLSaveResult base = ensureRoot();
-        if (base.isFailure()) return base;
-        if (!isValidName(version)) {
-            return UMMLSaveResult.failure(invalidNameError("version", version));
-        }
-        try {
-            Files.createDirectories(versionDir(version));
-            return UMMLSaveResult.success();
-        } catch (IOException e) {
-            return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, null, "could not create version folder", String.valueOf(versionDir(version))));
-        }
-    }
-
-    // ========================================================================
-    // Listing saves
-    // ========================================================================
-
-    /** All save slots (without the .xml extension) for a version, sorted. */
-    public List<String> listSaves(String version) {
-        List<String> slots = new ArrayList<>();
-        Path dir = versionDir(version);
-        if (!Files.isDirectory(dir)) return slots;
-        try (var stream = Files.list(dir)) {
-            stream.filter(p -> Files.isRegularFile(p) && p.getFileName().toString().toLowerCase().endsWith(".xml"))
+            stream.filter(p -> Files.isRegularFile(p) && p.getFileName().toString().matches("[0-9]+\\.xml"))
                     .forEach(p -> {
                         String name = p.getFileName().toString();
-                        slots.add(name.substring(0, name.length() - 4));
+                        int slot = Integer.parseInt(name.substring(0, name.length() - 4));
+                        if (slot >= MIN_SLOT && slot <= MAX_SLOT) slots.add(slot);
                     });
-        } catch (IOException ignored) {
+        } catch (IOException | NumberFormatException ignored) {
             // best-effort
         }
         slots.sort(Comparator.naturalOrder());
         return slots;
     }
 
-    public boolean saveExists(String version, String slot) {
-        return Files.isRegularFile(saveFile(version, slot));
+    /** True if a save exists in the given slot. */
+    public boolean slotExists(int slot) {
+        return isValidSlot(slot) && Files.isRegularFile(saveFile(slot));
+    }
+
+    /** The first unused slot (1-20), or 0 when all slots are full. */
+    public int nextFreeSlot() {
+        List<Integer> used = listSlots();
+        for (int s = MIN_SLOT; s <= MAX_SLOT; s++) {
+            if (!used.contains(s)) return s;
+        }
+        return 0;
     }
 
     // ========================================================================
@@ -196,23 +165,23 @@ public class UMMLSaveSystem {
     // ========================================================================
 
     /**
-     * Writes a save to {@code saves/&lt;version&gt;/&lt;slot&gt;.xml}.
-     * The savedAt stamp is set automatically if it is still empty.
+     * Writes a save to {@code saves/&lt;slot&gt;.xml}. The savedAt stamp is
+     * set automatically if it is still empty.
      */
-    public UMMLSaveResult save(String version, String slot, UMMLSaveData data) {
+    public UMMLSaveResult save(int slot, UMMLSaveData data) {
         if (data == null) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.INVALID_ITEM, UMMLError.Severity.ERROR,
-                    version, null, "cannot save null save data", null));
+                    null, null, "cannot save null save data", null));
         }
-        UMMLSaveResult base = ensureVersion(version);
+        UMMLSaveResult base = ensureRoot();
         if (base.isFailure()) return base;
-        if (!isValidName(slot)) {
-            return UMMLSaveResult.failure(invalidNameError("save slot", slot));
+        if (!isValidSlot(slot)) {
+            return UMMLSaveResult.failure(invalidSlotError(slot));
         }
         if (data.savedAt().isEmpty()) {
             data.setSavedAt(LocalDateTime.now().format(TIMESTAMP));
         }
-        Path file = saveFile(version, slot);
+        Path file = saveFile(slot);
         try {
             String xml = toXml(data);
             Files.createDirectories(file.getParent());
@@ -220,67 +189,74 @@ public class UMMLSaveSystem {
             return UMMLSaveResult.success();
         } catch (IOException | RuntimeException e) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, slot, "could not write save file", String.valueOf(file)));
+                    null, "slot " + slot, "could not write save file", String.valueOf(file)));
         }
     }
 
     /** Loads a save slot, or returns a failed result (never throws). */
-    public UMMLSaveResult load(String version, String slot) {
-        Path file = saveFile(version, slot);
+    public UMMLSaveResult load(int slot) {
+        if (!isValidSlot(slot)) {
+            return UMMLSaveResult.failure(invalidSlotError(slot));
+        }
+        Path file = saveFile(slot);
         if (!Files.isRegularFile(file)) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, slot, "save file does not exist", String.valueOf(file)));
+                    null, "slot " + slot, "save file does not exist", String.valueOf(file)));
         }
         try {
             String xml = Files.readString(file, StandardCharsets.UTF_8);
             return UMMLSaveResult.success(fromXml(xml));
         } catch (IOException e) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, slot, "could not read save file", e.getMessage()));
+                    null, "slot " + slot, "could not read save file", e.getMessage()));
         } catch (Exception e) {
             // Bad XML in a save file must never crash the caller.
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.XML_PARSE, UMMLError.Severity.ERROR,
-                    version, slot, "save file could not be parsed as XML", e.getMessage()));
+                    null, "slot " + slot, "save file could not be parsed as XML", e.getMessage()));
         }
     }
 
     /** Deletes a save slot. Returns a failed result if it did not exist. */
-    public UMMLSaveResult delete(String version, String slot) {
-        Path file = saveFile(version, slot);
+    public UMMLSaveResult delete(int slot) {
+        if (!isValidSlot(slot)) {
+            return UMMLSaveResult.failure(invalidSlotError(slot));
+        }
+        Path file = saveFile(slot);
         if (!Files.isRegularFile(file)) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, slot, "save file does not exist", String.valueOf(file)));
+                    null, "slot " + slot, "save file does not exist", String.valueOf(file)));
         }
         try {
             Files.delete(file);
             return UMMLSaveResult.success();
         } catch (IOException e) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, slot, "could not delete save file", e.getMessage()));
+                    null, "slot " + slot, "could not delete save file", e.getMessage()));
         }
     }
 
-    /** Renames a save slot. Returns a failed result if either name is invalid. */
-    public UMMLSaveResult rename(String version, String oldSlot, String newSlot) {
-        if (!isValidName(newSlot)) {
-            return UMMLSaveResult.failure(invalidNameError("save slot", newSlot));
+    /** Moves a save to another slot. Fails if either slot is invalid or the target is taken. */
+    public UMMLSaveResult rename(int oldSlot, int newSlot) {
+        if (!isValidSlot(oldSlot) || !isValidSlot(newSlot)) {
+            int bad = isValidSlot(oldSlot) ? newSlot : oldSlot;
+            return UMMLSaveResult.failure(invalidSlotError(bad));
         }
-        Path from = saveFile(version, oldSlot);
-        Path to = saveFile(version, newSlot);
+        Path from = saveFile(oldSlot);
+        Path to = saveFile(newSlot);
         if (!Files.isRegularFile(from)) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, oldSlot, "save file does not exist", String.valueOf(from)));
+                    null, "slot " + oldSlot, "save file does not exist", String.valueOf(from)));
         }
         if (Files.exists(to)) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, newSlot, "a save with that name already exists", String.valueOf(to)));
+                    null, "slot " + newSlot, "a save already exists in that slot", String.valueOf(to)));
         }
         try {
             Files.move(from, to);
             return UMMLSaveResult.success();
         } catch (IOException e) {
             return UMMLSaveResult.failure(new UMMLError(UMMLError.Type.IO_ERROR, UMMLError.Severity.ERROR,
-                    version, oldSlot, "could not rename save file", e.getMessage()));
+                    null, "slot " + oldSlot, "could not rename save file", e.getMessage()));
         }
     }
 
@@ -288,30 +264,18 @@ public class UMMLSaveSystem {
     // Internal helpers
     // ========================================================================
 
-    private Path versionDir(String version) {
-        return root.resolve(sanitize(version));
+    private Path saveFile(int slot) {
+        return root.resolve(slot + ".xml");
     }
 
-    private Path saveFile(String version, String slot) {
-        return versionDir(version).resolve(sanitize(slot) + ".xml");
+    private static boolean isValidSlot(int slot) {
+        return slot >= MIN_SLOT && slot <= MAX_SLOT;
     }
 
-    private static boolean isValidName(String name) {
-        return name != null && NAME_OK.matcher(name).matches();
-    }
-
-    /** Stops weird names from escaping the save root (path traversal safety). */
-    private static String sanitize(String name) {
-        if (name == null) return "save";
-        String cleaned = name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
-        if (cleaned.isEmpty() || cleaned.equals(".") || cleaned.equals("..")) return "save";
-        return cleaned;
-    }
-
-    private static UMMLError invalidNameError(String what, String name) {
+    private static UMMLError invalidSlotError(int slot) {
         return new UMMLError(UMMLError.Type.INVALID_ITEM, UMMLError.Severity.ERROR,
                 null, null,
-                "invalid " + what + " name '" + name + "' - use letters, digits, spaces, _ or -",
+                "invalid save slot " + slot + " - use a slot between " + MIN_SLOT + " and " + MAX_SLOT,
                 null);
     }
 
@@ -323,7 +287,7 @@ public class UMMLSaveSystem {
      * The save XML format:
      *
      * <pre>
-     * &lt;save savedby="MTTV41" savedat="2026-08-03T08:15:00"&gt;
+     * &lt;save savedby="MTT Community Edition" savedat="2026-08-03T08:15:00"&gt;
      *   &lt;entry key="money" type="int"&gt;5000&lt;/entry&gt;
      *   &lt;entry key="playername" type="string"&gt;Bobby&lt;/entry&gt;
      *   &lt;group name="inventory"&gt;
