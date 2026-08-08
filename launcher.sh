@@ -120,8 +120,8 @@ while true; do
             echo "Running save system self test..."
             java -cp out umml.UMMLSaveSystemTest
             echo ""
-            echo "Running scan against MTT_Mods..."
-            java -cp out umml.UMMLMain ../MTT_Mods
+            echo "Running scan against Mods..."
+            java -cp out umml.UMMLMain ../Mods
             cd ..
             ;;
         5)

@@ -7,8 +7,6 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,15 +42,6 @@ public final class UMMLDashboard {
         });
     }
 
-    /** Finds the first existing directory among the candidates (CWD-relative). */
-    private static String findDefaultDir(String[] candidates) {
-        for (String candidate : candidates) {
-            Path p = Path.of(candidate);
-            if (Files.isDirectory(p)) return p.toAbsolutePath().normalize().toString();
-        }
-        return null;
-    }
-
     private static void showError(JComponent parent, String title, String message) {
         JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);
     }
@@ -84,8 +73,8 @@ public final class UMMLDashboard {
             setLayout(new BorderLayout(6, 6));
             setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-            String def = findDefaultDir(new String[]{"MTT_Mods", "../MTT_Mods", "../../MTT_Mods"});
-            dirField.setText(def == null ? "MTT_Mods" : def);
+            String def = UMML.modsDirectory().toString();
+            dirField.setText(def);
             dirField.setPreferredSize(new Dimension(420, 26));
 
             JButton browse = new JButton("Browse...");

@@ -59,6 +59,7 @@ public class DevConsole extends JFrame {
         setupWindow();
         registerBuiltinCommands();
         SaveCommands.register(this);
+        ModCommands.register(this);
         printHeader();
     }
 

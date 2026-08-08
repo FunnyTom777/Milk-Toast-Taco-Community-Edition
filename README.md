@@ -52,6 +52,7 @@ The dev console is a Swing-based tool for testing game systems quickly. Pick **o
 - Type `/help` for all commands, `/help <command>` for usage
 - `/player`, `/inventory` to inspect state; `/setmoney`, `/addmoney`, `/takemoney`, `/giveitem`, `/rename`, `/newgame` to poke at it
 - UMML saves are wired straight in: `/save <slot>`, `/load <slot>`, `/saves`, `/savedelete <slot>`, `/saverename <old> <new>`, `/saveinfo <slot>`, `/savesystem`. Slots are numbered 1-20 and map to `saves/<slot>.xml`
+- UMML mod loading is wired straight in too: `/mods` shows the mod loader info, `/modscan` scans `Mods/` and reports, `/modlist` lists loaded mods in load order, `/modinfo <name>` inspects a single mod, and `/modfail` lists mods that failed to load (and why)
 - Up/Down arrows recall command history, Tab autocompletes
 
 ## Packaging a Binary
@@ -70,20 +71,20 @@ Pick **option 5** in `launcher.bat` / `launcher.sh`. It builds the project, bund
 
 UMML is compiled automatically every time you run `launcher.bat` / `launcher.sh` - no separate build step needed. Its classes land in `UMML/out/` and its jar in `UMML/lib/umml.jar`.
 
-From the launcher menu: **option 3** opens the Swing dashboard (scan and inspect mods, browse and edit saves, run the self tests) and **option 4** runs the mod loading and save system self tests, then scans `MTT_Mods` and prints a report.
+From the launcher menu: **option 3** opens the Swing dashboard (scan and inspect mods, browse and edit saves, run the self tests) and **option 4** runs the mod loading and save system self tests, then scans `Mods` and prints a report.
 
 To use UMML in MTT CE code, `import umml.*` - the launcher builds UMML first, then compiles and runs MTT with UMML on the classpath, so there is no manual jar copying needed. The packaged binary bundles the UMML classes too.
 
 ### Mod loading
 
-UMML scans a mods directory (e.g. `MTT_Mods`), loads every valid mod, resolves `<moddependencies>` in order, and **never crashes** on a broken mod - it reports exactly which mods failed and why:
+UMML scans the project's `Mods/` folder, loads every valid mod, resolves `<moddependencies>` in order, and **never crashes** on a broken mod - it reports exactly which mods failed and why:
 
 ```java
 import umml.UMML;
 import umml.UMMLReport;
 import umml.UMMLMod;
 
-UMMLReport report = UMML.scan("MTT_Mods");   // never throws
+UMMLReport report = UMML.scan(UMML.modsDirectory());   // never throws
 
 for (UMMLMod mod : report.loadedMods()) {
     System.out.println(mod.name() + " v" + mod.version() + " by " + mod.author());
@@ -96,7 +97,9 @@ for (UMMLMod mod : report.failedMods()) {
 }
 ```
 
-Strict mode turns unresolved dependencies into a hard failure: `UMML.scan("MTT_Mods", UMMLOptions.defaults().strict(true))`.
+Mods live in a `Mods/` folder at the root of the project - one subfolder per mod, each with a `moddata.xml`. `UMML.modsDirectory()` finds it the same way the save system finds `saves/`. The `Mods/` folder is gitignored, so mods are never uploaded.
+
+Strict mode turns unresolved dependencies into a hard failure: `UMML.scan(UMML.modsDirectory(), UMMLOptions.defaults().strict(true))`.
 
 ### Save game system
 

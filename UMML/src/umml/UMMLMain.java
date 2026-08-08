@@ -10,9 +10,9 @@ import java.util.List;
  *
  *   java umml.UMMLMain [mods_directory] [--strict] [--verbose]
  *
- * If no directory is given, UMML looks in MTT_Mods, ../MTT_Mods and
- * ../../MTT_Mods. UMML is bundled with MTT Community Edition and serves
- * that project only.
+ * If no directory is given, UMML scans the MTT Community Edition project's
+ * {@code Mods/} folder (found the same way as the save system). UMML is
+ * bundled with MTT Community Edition and serves that project only.
  */
 public final class UMMLMain {
 
@@ -37,9 +37,9 @@ public final class UMMLMain {
         }
 
         if (dir == null) {
-            dir = findModsDirectory();
-            if (dir == null) {
-                System.err.println("Could not find MTT_Mods. Pass the directory as an argument.");
+            dir = UMML.modsDirectory().toString();
+            if (!Files.isDirectory(Path.of(dir))) {
+                System.err.println("Mods folder not found at " + dir + ". Pass the directory as an argument.");
                 printUsage();
                 System.exit(1);
             }
@@ -100,15 +100,6 @@ public final class UMMLMain {
             }
         }
         System.out.println();
-    }
-
-    private static String findModsDirectory() {
-        String[] candidates = {"MTT_Mods", "../MTT_Mods", "../../MTT_Mods"};
-        for (String candidate : candidates) {
-            Path p = Path.of(candidate);
-            if (Files.isDirectory(p)) return p.toAbsolutePath().normalize().toString();
-        }
-        return null;
     }
 
     private static void printUsage() {
