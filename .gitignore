@@ -1,5 +1,11 @@
+*.class
+*.jar
+
+
 Hidden/
 Hidden/**
 
 out/
 *.class
+
+dist/

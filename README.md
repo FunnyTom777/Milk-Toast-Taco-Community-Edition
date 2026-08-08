@@ -47,6 +47,14 @@ The dev console is a Swing-based tool for testing game systems quickly. Launch i
 - `/player`, `/inventory` to inspect state; `/setmoney`, `/addmoney`, `/takemoney`, `/giveitem`, `/rename`, `/newgame` to poke at it
 - Up/Down arrows recall command history, Tab autocompletes
 
+## Packaging a Binary
+
+`package.bat` (Windows) and `./package.sh` (Linux/macOS) build the project, bundle it into a jar, and run `jpackage` to produce a self-contained app that needs no installed Java.
+
+- Output: `dist/MilkToastTaco/` containing `MilkToastTaco.exe` (Windows) plus its bundled runtime
+- Requires a **JDK 14+** with `jpackage`; the scripts find it via `JAVA_HOME` or common install paths
+- The `dist/MilkToastTaco` folder can be zipped and shipped as-is. A proper `.exe` installer (`jpackage --type exe`) is possible if [WiX Toolset](https://wixtoolset.org/) is installed
+
 ### Development Notes:
 - Data files are `.xml`, Not JSON or YAML.
 - Game is made in Java, With Limited External Dependancies. No Gradle/Maven (Atleast Yet)
