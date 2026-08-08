@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu title="New Game" width="800" height="600" background="0x202025">
+    <element type="label" x="0" y="40" width="800" height="40" text="NEW GAME"
+             align="center" size="26" bold="true" color="0xFFDC32"/>
+
+    <element type="label" x="300" y="180" width="200" height="24" text="What is your name?" align="center"/>
+    <element type="textfield" x="300" y="210" width="200" height="30" text=""/>
+
+    <element type="button" x="300" y="300" width="200" height="42" text="Start" target="main.xml"/>
+    <element type="button" x="300" y="360" width="200" height="42" text="Back" action="back"/>
+</menu>
