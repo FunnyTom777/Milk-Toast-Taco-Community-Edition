@@ -14,17 +14,21 @@ The source code for **Milk Toast Taco 26** is *closed source*.
 Updates to **Milk Toast Taco 26** will be added to the Community Edition approximately **2–3 weeks after their release** in MTT 26.
 
 
+### Current MTT Version: `v0.1.1`
+Latest Releases are [here](https://github.com/FunnyTom777/Milk-Toast-Taco-Community-Edition/releases)
 
 
 
+# MilkToast Taco CE: Chapter 2
 
+The MilkToastTaco Chapter 2 is the planned update *(Around v1.0.0 possibly?)*
 
+which intends to include features like:
+- 2D rendering
+- Vehicle simulation
+- Career Mode
 
-
-
-
-
-
+And more features! (Probbably...)
 
 
 
