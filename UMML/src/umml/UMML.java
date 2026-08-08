@@ -5,10 +5,12 @@ import java.nio.file.Path;
 /**
  * UMML - Unified MTT Mod Loader.
  *
- * The single entry point for MTT versions that want to hook into the
- * shared mod loader. Scans a mods directory (e.g. MTT_Mods), loads every
- * valid mod, resolves dependencies, and never throws - problems are
- * reported as {@link UMMLError} entries inside a {@link UMMLReport}.
+ * The mod loader bundled with Milk Toast Taco Community Edition. It is
+ * only designed to serve MTT Community Edition - not every MTT version -
+ * and lives inside this repository's {@code UMML/} folder. Scans a mods
+ * directory (e.g. MTT_Mods), loads every valid mod, resolves dependencies,
+ * and never throws - problems are reported as {@link UMMLError} entries
+ * inside a {@link UMMLReport}.
  *
  * <pre>
  * UMMLReport report = UMML.scan("MTT_Mods");

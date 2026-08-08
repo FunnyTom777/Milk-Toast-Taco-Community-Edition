@@ -23,14 +23,15 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * The shared MTT save game system.
+ * The save game system for Milk Toast Taco Community Edition.
  *
- * <p>Saves live in a {@code MTT_saves} folder at the repo root, one
- * subdirectory per MTT version so different versions never trample each
- * other's saves:
+ * <p>Saves always live in a {@code saves} folder at the root of the
+ * project (no more hunting through parent directories), one subdirectory
+ * per MTT Community Edition version so different versions never trample
+ * each other's saves:
  *
  * <pre>
- * MTT_saves/
+ * saves/
  *   MTTV39/  Slot1.xml  Slot2.xml
  *   MTTV40/  Slot1.xml
  *   MTTV41/
@@ -43,7 +44,7 @@ import java.util.regex.Pattern;
  * <pre>
  * UMMLSaveSystem saves = UMMLSaveSystem.find();
  * UMMLSaveResult result = saves.load("MTTV41", "Slot1");
- * if (result.success()) {
+ * if (result.isSuccess()) {
  *     UMMLSaveData data = result.data();
  *     int money = data.getInt("money", 0);
  * }
@@ -73,33 +74,42 @@ public class UMMLSaveSystem {
     }
 
     /**
-     * Finds the {@code MTT_saves} directory the same way the mod loader
-     * finds {@code MTT_Mods}: it checks the current directory, then the
-     * parent, then the grandparent. If none exists it defaults to
-     * {@code MTT_saves} in the current directory (created on first save).
+     * Opens the save system at the project root's {@code saves/} folder.
+     * UMML is bundled with MTT Community Edition, so saves go to one fixed
+     * place - {@code saves/} at the root of the project - instead of being
+     * hunted down through parent directories.
+     *
+     * <p>The project root is found by walking up from the current directory
+     * until a folder containing {@code Systems} (the MTT source root) is
+     * found. If that never happens (e.g. a packaged build with no source
+     * tree), saves fall back to {@code saves/} next to the current directory.
+     * The folder is created on first save.
      */
     public static UMMLSaveSystem find() {
-        String[] candidates = {"MTT_saves", "../MTT_saves", "../../MTT_saves"};
-        for (String candidate : candidates) {
-            Path p = Path.of(candidate);
-            if (Files.isDirectory(p)) {
-                return new UMMLSaveSystem(p.toAbsolutePath().normalize());
-            }
-        }
-        return new UMMLSaveSystem(Path.of("MTT_saves"));
+        return new UMMLSaveSystem(projectRoot().resolve("saves"));
     }
 
-    /** The root MTT_saves directory this system reads and writes. */
+    /** Walks up from the current directory looking for the MTT project root. */
+    private static Path projectRoot() {
+        Path p = Path.of("").toAbsolutePath().normalize();
+        while (p != null) {
+            if (Files.isDirectory(p.resolve("Systems"))) return p;
+            p = p.getParent();
+        }
+        return Path.of("").toAbsolutePath().normalize();
+    }
+
+    /** The root saves directory this system reads and writes. */
     public Path root() {
         return root;
     }
 
-    /** True if the root MTT_saves directory already exists. */
+    /** True if the root saves directory already exists. */
     public boolean exists() {
         return Files.isDirectory(root);
     }
 
-    /** Creates the root MTT_saves directory if it does not exist. */
+    /** Creates the root saves directory if it does not exist. */
     public UMMLSaveResult ensureRoot() {
         try {
             Files.createDirectories(root);
@@ -137,8 +147,8 @@ public class UMMLSaveSystem {
     }
 
     /**
-     * Creates (or re-uses) the folder for an MTT version, e.g.
-     * {@code ensureVersion("MTTV41")} makes {@code MTT_saves/MTTV41}.
+     * Creates (or re-uses) the folder for an MTT Community Edition version,
+     * e.g. {@code ensureVersion("MTTV41")} makes {@code saves/MTTV41}.
      */
     public UMMLSaveResult ensureVersion(String version) {
         UMMLSaveResult base = ensureRoot();
@@ -186,7 +196,7 @@ public class UMMLSaveSystem {
     // ========================================================================
 
     /**
-     * Writes a save to {@code MTT_saves/&lt;version&gt;/&lt;slot&gt;.xml}.
+     * Writes a save to {@code saves/&lt;version&gt;/&lt;slot&gt;.xml}.
      * The savedAt stamp is set automatically if it is still empty.
      */
     public UMMLSaveResult save(String version, String slot, UMMLSaveData data) {

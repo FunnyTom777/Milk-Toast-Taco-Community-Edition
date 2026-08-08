@@ -1,25 +1,36 @@
+# UMML - Unified MTT Mod Loader
+
+UMML is now bundled with Milk Toast Taco Community Edition and only serves
+MTT Community Edition - not every MTT version anymore. It lives in the
+`UMML/` folder inside this repo.
+
+The 2D renderer (UMML 1.5/2.5: `UMMLRenderer`, `UMMLGraphics`,
+`UMMLGraphics2D`, `UMMLImage`, `UMMLSprite`, `UMMLInput`, `UMMLTilemap`,
+`UMMLParticleSystem`, `UMMLAnimation` and their tests) has been REMOVED
+from UMML along with its documentation. UMML is mod loading + saves only.
+
 # UMML 1.0
 
-- [x] Add Save Game system to UMML that MilkToastTaco versions can use alongwith Mod Loading functions. (Part of UMML update 1.0)
+- [x] Add Save Game system to UMML that MilkToastTaco Community Edition can use alongwith Mod Loading functions. (Part of UMML update 1.0)
 - [x] Add Swing Grathical Dashboard for UMML with options for Self Testing of individual UMML systems (Mod Loading, Saves) (Part of UMML Update 1.0)
-- [x] A MTT_saves folder in root, With subdirectories for each MTT versions
+- [x] A saves folder at the root of the project, With subdirectories for each MTT Community Edition version
   EG:
 
-  MTT_saves > MTTV39
-            > MTTV40
-            > MTTV41
-            etc.
+  saves > MTTV39
+        > MTTV40
+        > MTTV41
+        etc.
 
-- [x] Each save uses XML and should be very dynamic, so diffrent MTT versions can save lots of data to there saves, not just fixed values.
+- [x] Saves always go to the project root /saves/ (no more dynamic location hunting - no parent-directory searching)
+- [x] Each save uses XML and should be very dynamic, so MTT Community Edition can save lots of data to there saves, not just fixed values.
 - [x] And UI for viewing existing saves in the UMML dashboard.
 
 
 
-# UMML 1.5
+# UMML 1.5 (Removed)
 
-- [x] Implement the UMML Renderer as part of 1.5! It should be easy to use in all future MTT versions for 2D rendering, with easy to use functions for drawing sprites, moving sprites, etc.
-- [x] the UMML renderer functions should be AS EASY to use as possible, and with EXTENSIVE documentation for future me on how to use it.
-- [x] Should use the Built in Java graphics for now, But can be extended/modified later with other rendering systems, while not having to rewrite MTT.
+The 2D renderer that shipped in 1.5 has been removed from UMML - see the
+removal note at the top of this file.
 
 
 
@@ -55,19 +66,20 @@
 
 
 
-# UMML 2.5
+# UMML 2.5 (Removed)
 
-- [x] Tile maps! A `UMMLTilemap` class for drawing levels out of a grid of tiles from a sprite sheet, with camera culling so huge levels draw fast, plus coordinate helpers for collision. Drawn via `renderer.drawTilemap(map)`.
-- [x] Particle effects! A `UMMLParticleSystem` for explosions, smoke, rain and sparks - speed + variance, direction + spread, gravity, lifetime, size, start/end colour fade, one-shot `burst()` or a steady `setRate()` stream, with a live-count cap. Auto-updated/drawn via `renderer.addParticles(system)`.
-- [x] Sprite animations! A `UMMLAnimation` class for frame-by-frame animation from a sprite sheet or a list of pictures, loop/one-shot modes and finished callbacks. Attach to a sprite with `sprite.setAnimation(anim)` and it animates itself.
-- [x] Added a headless `UMMLRendererExtrasTest` self test (87 checks) wired into `test.bat`.
-- [x] Renderer demo (`UMMLRendererExample`) now shows off the tile map floor, an animated gem, and a click-to-explode particle burst.
+Tile maps, particles and sprite animations were part of the renderer and
+have been removed along with it - see the removal note at the top of this
+file.
 
 
 
 
 
 # UMML 3.0 (Abandoned)
+
+> Abandoned idea, kept for reference. It was built on the now-removed
+> 2D renderer, so it would need the renderer (or a rethink) to ever happen.
 
 - [ ] **UMLua!** A hand-written mini-Lua interpreter in Java - Lua scripting for games, built with ZERO external libraries, just like the renderer. UMML stays Java, but now it can receive Lua code, interpret it, and tell the Java API what to do. Almost Love2D simple.
 
@@ -104,9 +116,9 @@
   - [ ] **Never crash, the UMML way** - a Lua runtime error in `on_update` prints a line-numbered traceback to the console and the game keeps running. Missing `on_draw` just draws nothing.
   - [ ] **`on_error(err)` callback** - Lua can hook errors itself (nice for "show a message then restart the level").
   - [ ] **`print()` goes to the console AND the UMML dashboard** (if open) - so people scripting games can see their logs.
-  - [ ] **UMMLLuaTest** - headless self test: loads a pile of .lua snippets and checks the results (math, strings, tables, loops, functions, closures, error cases), wired into `test.bat`.
+  - [ ] **UMMLLuaTest** - headless self test: loads a pile of .lua snippets and checks the results (math, strings, tables, loops, functions, closures, error cases), wired into the launcher's UMML self tests.
   - [ ] **A Lua demo game** (`example/game.lua`) showing off the whole 2.5 renderer (sprites, tilemap, particles, animations) scripted in pure Lua.
-  - [ ] **Save system bridge** - `save:set_string("playername", "Bobby")` / `save:get_int("money")` etc., so Lua games can use the shared MTT_saves system too.
+  - [ ] **Save system bridge** - `save:set_string("playername", "Bobby")` / `save:get_int("money")` etc., so Lua games can use the shared saves system too.
   - [ ] Documentation in README.md: "Making a game with Lua" section + full API reference for the Lua side.
 
   - Files (in a `umml.lua` subpackage so the main `umml` package stays tidy):
@@ -125,7 +137,7 @@
   - Milestones:
     - [ ] 1) Lexer + parser + interpreter (numbers/strings/tables/functions/closures + stdlib), proven by headless tests.
     - [ ] 2) The Java <-> Lua bridge (both directions) + `UMMLLuaGame`.
-    - [ ] 3) Demo game + README/todo updates + `test.bat` wiring.
+    - [ ] 3) Demo game + README/todo updates + launcher self test wiring.
 
 ## UMML 3.5 (ideas, not promised)
 

@@ -8,11 +8,11 @@ import java.util.Set;
 /**
  * The contents of one MTT save file.
  *
- * <p>Deliberately dynamic: UMML does not need to know what a game stores in
- * its save. Any MTT version can write any number of typed key/value entries
- * plus nested {@link #group(String) groups}, and the XML format is stable
- * across MTT versions, so a save written by MTTV40 can be read by MTTV41
- * (and vice versa).
+ * <p>Deliberately dynamic: UMML does not need to know what the game stores
+ * in its save. MTT Community Edition can write any number of typed
+ * key/value entries plus nested {@link #group(String) groups}, and the XML
+ * format is stable across MTT Community Edition versions, so a save written
+ * by one build can be read by the next (and vice versa).
  *
  * <p>Values must be one of {@link String}, {@link Integer}, {@link Long},
  * {@link Double}, {@link Float}, {@link Boolean} or {@code null}. A null

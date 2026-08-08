@@ -11,7 +11,8 @@ import java.util.List;
  *   java umml.UMMLMain [mods_directory] [--strict] [--verbose]
  *
  * If no directory is given, UMML looks in MTT_Mods, ../MTT_Mods and
- * ../../MTT_Mods (like the classic MTT mod loaders did).
+ * ../../MTT_Mods. UMML is bundled with MTT Community Edition and serves
+ * that project only.
  */
 public final class UMMLMain {
 

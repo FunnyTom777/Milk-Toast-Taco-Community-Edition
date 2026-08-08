@@ -9,3 +9,6 @@ out/
 *.class
 
 dist/
+
+# Game saves (never uploaded)
+saves/

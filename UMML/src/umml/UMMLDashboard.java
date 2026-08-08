@@ -17,7 +17,7 @@ import java.util.List;
  *
  * Three tabs:
  *   Mods      - pick a mods directory, scan it, and inspect loaded/failed mods
- *   Saves     - browse MTT_saves/&lt;version&gt;/&lt;slot&gt;.xml, view and
+ *   Saves     - browse saves/&lt;version&gt;/&lt;slot&gt;.xml, view and
  *               lightly edit save contents, create and delete saves
  *   Self Test - run the mod loading and save system self tests, capturing
  *               their console output
@@ -31,7 +31,7 @@ public final class UMMLDashboard {
     public static void main(String[] args) {
         applyDarkTheme();
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("UMML 1.0 - Unified MTT Mod Loader & Save System");
+            JFrame frame = new JFrame("UMML - Unified MTT Mod Loader & Save System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             JTabbedPane tabs = new JTabbedPane();
             tabs.addTab("Mods", new ModsPanel());
@@ -218,8 +218,8 @@ public final class UMMLDashboard {
             setLayout(new BorderLayout(6, 6));
             setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
-            String def = findDefaultDir(new String[]{"MTT_saves", "../MTT_saves", "../../MTT_saves"});
-            rootField.setText(def == null ? "MTT_saves" : def);
+            String def = UMMLSaveSystem.find().root().toString();
+            rootField.setText(def == null ? "saves" : def);
             rootField.setPreferredSize(new Dimension(420, 26));
 
             JButton browse = new JButton("Browse...");
@@ -506,7 +506,6 @@ public final class UMMLDashboard {
         private final JTextArea out = new JTextArea();
         private final JButton modsBtn = new JButton("Test Mod Loading");
         private final JButton savesBtn = new JButton("Test Save System");
-        private final JButton rendererBtn = new JButton("Test Renderer");
         private final JButton bothBtn = new JButton("Run All");
 
         SelfTestPanel() {
@@ -518,7 +517,6 @@ public final class UMMLDashboard {
             JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             buttons.add(modsBtn);
             buttons.add(savesBtn);
-            buttons.add(rendererBtn);
             buttons.add(bothBtn);
             top.add(buttons);
 
@@ -526,15 +524,13 @@ public final class UMMLDashboard {
             out.setFont(new Font("Consolas", Font.PLAIN, 12));
             out.append("UMML self test console.\n"
                     + "Pick a test to run. The mod loading test builds a temporary mods\n"
-                    + "fixture; the save system test builds a temporary MTT_saves tree; the\n"
-                    + "renderer test draws into an in-memory image (no window opens).\n\n");
+                    + "fixture; the save system test builds a temporary saves tree.\n\n");
 
             add(top, BorderLayout.NORTH);
             add(new JScrollPane(out), BorderLayout.CENTER);
 
             modsBtn.addActionListener(e -> runTest("mods"));
             savesBtn.addActionListener(e -> runTest("saves"));
-            rendererBtn.addActionListener(e -> runTest("renderer"));
             bothBtn.addActionListener(e -> runTest("both"));
         }
 
@@ -561,10 +557,6 @@ public final class UMMLDashboard {
                                 captured.append(">>> Save system self test\n\n");
                                 ok = UMMLSaveSystemTest.runTests();
                             }
-                            case "renderer" -> {
-                                captured.append(">>> Renderer self test\n\n");
-                                ok = UMMLRendererTest.runTests();
-                            }
                             default -> {
                                 captured.append(">>> Mod loading self test\n\n");
                                 ok = UMMLSelfTest.runTests();
@@ -572,10 +564,6 @@ public final class UMMLDashboard {
                                 captured.append("\n\n>>> Save system self test\n\n");
                                 buffer.reset();
                                 ok = UMMLSaveSystemTest.runTests() && ok;
-                                captured.append(buffer.toString());
-                                captured.append("\n\n>>> Renderer self test\n\n");
-                                buffer.reset();
-                                ok = UMMLRendererTest.runTests() && ok;
                             }
                         }
                     } catch (IOException e) {
@@ -601,7 +589,6 @@ public final class UMMLDashboard {
         private void setButtonsEnabled(boolean enabled) {
             modsBtn.setEnabled(enabled);
             savesBtn.setEnabled(enabled);
-            rendererBtn.setEnabled(enabled);
             bothBtn.setEnabled(enabled);
         }
     }

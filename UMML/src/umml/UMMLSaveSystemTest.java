@@ -11,7 +11,7 @@ import java.util.List;
  *
  * Creates a temporary save root and verifies that:
  *   - versions and slots round-trip through XML (typed values + groups)
- *   - saves from different MTT versions live in separate folders
+ *   - saves from different MTT Community Edition versions live in separate folders
  *   - load/delete/rename report clean failures instead of throwing
  *   - a corrupt save file produces a {@link UMMLError}, never a crash
  *
