@@ -95,6 +95,7 @@ public final class SaveCommands {
             console.setPlayer(loaded);
             console.printHeader("Loaded slot " + slot);
             console.print("  Name: " + loaded.name());
+            console.print("  Level: " + loaded.level() + " | XP: " + loaded.xp() + "/" + loaded.xpForNextLevel());
             console.print("  Money: $" + String.format("%.2f", loaded.money()));
             console.printInfo("  Inventory (" + loaded.inventory().size() + "): "
                     + (loaded.inventory().isEmpty() ? "(empty)" : String.join(", ", loaded.inventory())));

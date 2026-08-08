@@ -17,6 +17,7 @@ public class Game {
             "look          describe your surroundings",
             "inventory     list what you are carrying",
             "balance       show how much money you have",
+            "stats         show your level, xp, and stats",
             "quit          leave the game"
     );
 
@@ -35,6 +36,7 @@ public class Game {
         register("inv", (c, g) -> describeInventory());
         register("balance", (c, g) -> describeBalance());
         register("money", (c, g) -> describeBalance());
+        register("stats", (c, g) -> describeStats());
         register("quit", (c, g) -> {
             running = false;
             return null;
@@ -114,5 +116,15 @@ public class Game {
 
     private String describeBalance() {
         return String.format("You have $%.2f in your wallet.", player.money());
+    }
+
+    private String describeStats() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Level ").append(player.level()).append(" - ").append(player.xp())
+                .append("/").append(player.xpForNextLevel()).append(" XP");
+        for (Map.Entry<String, Integer> e : player.stats().entrySet()) {
+            sb.append(System.lineSeparator()).append("  ").append(e.getKey()).append(": ").append(e.getValue());
+        }
+        return sb.toString();
     }
 }

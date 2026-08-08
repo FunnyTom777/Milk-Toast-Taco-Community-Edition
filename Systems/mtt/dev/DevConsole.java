@@ -164,13 +164,27 @@ public class DevConsole extends JFrame {
 
         registerCommand("player", "Show player stats, money, and inventory", "/player", args -> {
             printColored(HEADER_COLOR, "=== " + player.name() + " ===");
+            printColored(HIGHLIGHT_COLOR, "  Level: " + player.level() + " | XP: " + player.xp()
+                    + "/" + player.xpForNextLevel());
             printColored(HIGHLIGHT_COLOR, "  Money: $" + String.format("%.2f", player.money()));
+            printColored(INFO_COLOR, "  --- Stats ---");
+            for (Map.Entry<String, Integer> e : player.stats().entrySet()) {
+                printColored(TEXT_COLOR, "    " + e.getKey() + ": " + e.getValue());
+            }
             printColored(INFO_COLOR, "  --- Inventory (" + player.inventory().size() + " items) ---");
             if (player.inventory().isEmpty()) {
                 printColored(HIGHLIGHT_COLOR, "    (empty)");
             } else {
                 for (String item : player.inventory()) {
                     printColored(TEXT_COLOR, "    - " + item);
+                }
+            }
+            printColored(INFO_COLOR, "  --- Licenses ---");
+            if (player.licenses().isEmpty()) {
+                printColored(HIGHLIGHT_COLOR, "    (none)");
+            } else {
+                for (String license : player.licenses()) {
+                    printColored(TEXT_COLOR, "    - " + license);
                 }
             }
         });
@@ -241,6 +255,82 @@ public class DevConsole extends JFrame {
             String name = args.length > 0 ? String.join(" ", args) : "Player";
             player = new Player(name, 200.0, List.of());
             printColored(TEXT_COLOR, "New game started: " + player.name());
+        });
+
+        registerCommand("stats", "Show all player stats", "/stats", args -> {
+            printColored(HEADER_COLOR, "=== " + player.name() + "'s Stats ===");
+            for (Map.Entry<String, Integer> e : player.stats().entrySet()) {
+                printColored(TEXT_COLOR, "  " + e.getKey() + ": " + e.getValue());
+            }
+        });
+
+        registerCommand("setstat", "Set a player stat to an exact value", "/setstat <name> <value>", args -> {
+            if (args.length < 2) {
+                printError("Usage: /setstat <name> <value>");
+                return;
+            }
+            player.setStat(args[0], parseIntOrDefault(args[1], 0));
+            printColored(TEXT_COLOR, "Stat '" + args[0] + "' set to " + player.stat(args[0]));
+        });
+
+        registerCommand("addstat", "Add to a player stat", "/addstat <name> <amount>", args -> {
+            if (args.length < 2) {
+                printError("Usage: /addstat <name> <amount>");
+                return;
+            }
+            int updated = player.addStat(args[0], parseIntOrDefault(args[1], 0));
+            printColored(TEXT_COLOR, "Stat '" + args[0] + "' is now " + updated);
+        });
+
+        registerCommand("addxp", "Give the player XP (may level them up)", "/addxp <amount>", args -> {
+            if (args.length == 0) {
+                printError("Usage: /addxp <amount>");
+                return;
+            }
+            long amount = parseLongOrDefault(args[0], 0);
+            int levels = player.addXp(amount);
+            printColored(TEXT_COLOR, "+" + amount + " XP | Level " + player.level() + " ("
+                    + player.xp() + "/" + player.xpForNextLevel() + ")");
+            if (levels > 0) {
+                printColored(HIGHLIGHT_COLOR, "LEVEL UP! You are now level " + player.level());
+            }
+        });
+
+        registerCommand("licenses", "List the player's licenses", "/licenses", args -> {
+            printColored(INFO_COLOR, "=== Licenses ===");
+            if (player.licenses().isEmpty()) {
+                printColored(HIGHLIGHT_COLOR, "  (none)");
+            } else {
+                for (String license : player.licenses()) {
+                    printColored(TEXT_COLOR, "  - " + license);
+                }
+            }
+        });
+
+        registerCommand("addlicense", "Give the player a license", "/addlicense <name>", args -> {
+            if (args.length == 0) {
+                printError("Usage: /addlicense <name>");
+                return;
+            }
+            String license = String.join(" ", args);
+            if (player.addLicense(license)) {
+                printColored(TEXT_COLOR, "Granted license: " + license);
+            } else {
+                printColored(HIGHLIGHT_COLOR, "Already had license: " + license);
+            }
+        });
+
+        registerCommand("removelicense", "Take a license from the player", "/removelicense <name>", args -> {
+            if (args.length == 0) {
+                printError("Usage: /removelicense <name>");
+                return;
+            }
+            String license = String.join(" ", args);
+            if (player.removeLicense(license)) {
+                printColored(TEXT_COLOR, "Removed license: " + license);
+            } else {
+                printError("Player does not have license: " + license);
+            }
         });
     }
 
@@ -405,6 +495,22 @@ public class DevConsole extends JFrame {
     private double parseDoubleOrDefault(String s, double def) {
         try {
             return Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    private int parseIntOrDefault(String s, int def) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    private long parseLongOrDefault(String s, long def) {
+        try {
+            return Long.parseLong(s);
         } catch (NumberFormatException e) {
             return def;
         }

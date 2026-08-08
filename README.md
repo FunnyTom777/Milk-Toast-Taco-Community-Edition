@@ -55,6 +55,7 @@ The dev console is a Swing-based tool for testing game systems quickly. Pick **o
 
 - Type `/help` for all commands, `/help <command>` for usage
 - `/player`, `/inventory` to inspect state; `/setmoney`, `/addmoney`, `/takemoney`, `/giveitem`, `/rename`, `/newgame` to poke at it
+- Player progress: `/stats` lists stats, `/setstat` / `/addstat` tune them, `/addxp` grants XP (and levels you up), and `/licenses` / `/addlicense` / `/removelicense` manage licenses
 - UMML saves are wired straight in: `/save <slot>`, `/load <slot>`, `/saves`, `/savedelete <slot>`, `/saverename <old> <new>`, `/saveinfo <slot>`, `/savesystem`. Slots are numbered 1-20 and map to `saves/<slot>.xml`
 - UMML mod loading is wired straight in too: `/mods` shows the mod loader info, `/modscan` scans `Mods/` and reports, `/modlist` lists loaded mods in load order, `/modinfo <name>` inspects a single mod, and `/modfail` lists mods that failed to load (and why)
 - Up/Down arrows recall command history, Tab autocompletes
