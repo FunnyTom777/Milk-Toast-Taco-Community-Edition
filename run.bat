@@ -11,4 +11,6 @@ set "CP=out"
 for %%J in ("Libs\*.jar") do set "CP=!CP!;%%J"
 
 java -cp "%CP%" mtt.Main %*
+echo.
+pause
 endlocal
