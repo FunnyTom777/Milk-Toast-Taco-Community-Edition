@@ -39,6 +39,14 @@ Requires a **Java 21+ JDK**. No Gradle or Maven yet - plain `javac` and `java`.
 
 Compiled classes land in `out/`. Any external jars dropped in `Libs/` are picked up automatically. The source root is `Systems/` - game systems live as subpackages (`mtt.ai`, `mtt.gameplay`, `mtt.vehicles`, ...).
 
+## Dev Console
+
+The dev console is a Swing-based tool for testing game systems quickly. Launch it with `run-dev.bat` (Windows) or `./run-dev.sh` (Linux/macOS) after building.
+
+- Type `/help` for all commands, `/help <command>` for usage
+- `/player`, `/inventory` to inspect state; `/setmoney`, `/addmoney`, `/takemoney`, `/giveitem`, `/rename`, `/newgame` to poke at it
+- Up/Down arrows recall command history, Tab autocompletes
+
 ### Development Notes:
 - Data files are `.xml`, Not JSON or YAML.
 - Game is made in Java, With Limited External Dependancies. No Gradle/Maven (Atleast Yet)
