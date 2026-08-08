@@ -1,2 +1,5 @@
 Hidden/
 Hidden/**
+
+out/
+*.class

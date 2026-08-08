@@ -30,6 +30,15 @@ Updates to **Milk Toast Taco 26** will be added to the Community Edition approxi
 
 
 
+## Building and Running
+
+Requires a **Java 21+ JDK**. No Gradle or Maven yet - plain `javac` and `java`.
+
+- **Windows:** run `build.bat`, then `run.bat`
+- **Linux/macOS:** run `./build.sh`, then `./run.sh`
+
+Compiled classes land in `out/`. Any external jars dropped in `Libs/` are picked up automatically. The source root is `Systems/` - game systems live as subpackages (`mtt.ai`, `mtt.gameplay`, `mtt.vehicles`, ...).
+
 ### Development Notes:
 - Data files are `.xml`, Not JSON or YAML.
 - Game is made in Java, With Limited External Dependancies. No Gradle/Maven (Atleast Yet)
