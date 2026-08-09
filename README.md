@@ -45,7 +45,9 @@ Everything is driven by one launcher. Run `launcher.bat` (Windows) or `./launche
 - `3` Launch UMML Dashboard
 - `4` Run UMML Self Tests
 - `5` Package a Binary
-- `6` Exit
+- `6` Run UMUIS (Experimental)
+- `7` Run UMUIS Self Tests
+- `8` Exit
 
 Compiled classes land in `out/` (MTT) and `UMML/out/` (UMML). Any external jars dropped in `Libs/` are picked up automatically. The source root is `Systems/` - game systems live as subpackages (`mtt.ai`, `mtt.gameplay`, `mtt.vehicles`, ...).
 
@@ -135,6 +137,46 @@ if (result.isSuccess()) {
 ```
 
 Every operation returns a `UMMLSaveResult` (`isSuccess()` / `data()` / `error()`) instead of throwing, and a corrupt save file is reported as an `XML_PARSE` error, never a crash. Supported value types: `string`, `int`, `long`, `double`, `float`, `boolean`, plus nested `group(name)`.
+
+## UMUIS - Unified MTT User Interface System *(Experimental)*
+
+`UMUIS/` is an experimental Swing UI system bundled with **Milk Toast Taco Community Edition**. Instead of opening one window per screen, it renders **one** window and swaps menus in and out of it. Menus are described in XML - one file per menu - so the UI can be edited without touching Java.
+
+### How it works
+
+Each menu is a `.xml` file in `UMUIS/menus/`. A `<menu>` root sets the window title, size, and background, and holds `<element>`s that map to Swing components:
+
+```xml
+<menu title="Main Menu" width="800" height="600" background="0x202025">
+    <element type="label" x="0" y="20" width="800" height="40"
+             text="MILK TOAST TACO" align="center" size="28" bold="true" color="0xFFDC32"/>
+    <element type="button" x="300" y="200" width="200" height="42"
+             text="Options" target="options.xml"/>
+    <element type="button" x="300" y="440" width="200" height="42"
+             text="Quit" action="quit"/>
+</menu>
+```
+
+Elements are positioned absolutely with `x`, `y`, `width`, `height`. Supported types: `label`, `button`, `textfield`. Buttons either navigate to another menu (via `target`, resolved relative to the current menu file) or run a built-in action:
+
+- `quit` - close the window and exit
+- `close` - close the window
+- `back` - return to the previously shown menu
+- `reload` - re-render the current menu
+
+`UMUISWindow` keeps a navigation history, so `back` always returns to where the user came from, and the same window is reused for every menu. Menus are parsed with `UMUISParser.parse(Path)` (throwing on invalid XML), and a broken menu shows an error instead of crashing.
+
+### Building and running
+
+From the launcher: **option 6** opens the window (`UMUIS/menus/main.xml` by default), **option 7** runs the headless self test which parses every menu in `UMUIS/menus` and checks that every button `target` resolves. To run directly:
+
+```
+java -cp UMUIS/out umuis.UMUISMain            # open the default main menu
+java -cp UMUIS/out umuis.UMUISMain path/menu.xml
+java -cp UMUIS/out umuis.UMUISSelfTest        # validate all menus
+```
+
+UMUIS compiles with plain `javac` into `UMUIS/out` - no external dependencies, just the JDK. It is experimental and not yet wired into the main game or the packaged binary.
 
 ### Development Notes:
 - Data files are `.xml`, Not JSON or YAML.

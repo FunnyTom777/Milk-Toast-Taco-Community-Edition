@@ -39,6 +39,15 @@ build_umml() {
     fi
 }
 
+build_umuis() {
+    mkdir -p UMUIS/out
+    echo "Building UMUIS (Experimental)..."
+    javac -encoding UTF-8 -d UMUIS/out UMUIS/src/umuis/*.java || {
+        echo "UMUIS BUILD FAILED. See errors above." >&2
+        exit 1
+    }
+}
+
 package_binary() {
     BIN=""
     if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/jpackage" ]; then
@@ -77,6 +86,12 @@ echo "  Building Milk Toast Taco Community Edition..."
 echo "=========================================="
 build_mtt
 
+echo ""
+echo "=========================================="
+echo "  Building UMUIS (Experimental)..."
+echo "=========================================="
+build_umuis
+
 while true; do
     clear 2>/dev/null || true
     echo "=========================================="
@@ -88,7 +103,9 @@ while true; do
     echo "  [3] Launch UMML Dashboard"
     echo "  [4] Run UMML Self Tests"
     echo "  [5] Package a Binary (jpackage)"
-    echo "  [6] Exit"
+    echo "  [6] Run UMUIS (Experimental)"
+    echo "  [7] Run UMUIS Self Tests"
+    echo "  [8] Exit"
     echo ""
     printf "Pick an option: "
     read CHOICE || break
@@ -128,6 +145,12 @@ while true; do
             package_binary
             ;;
         6)
+            java -cp UMUIS/out umuis.UMUISMain
+            ;;
+        7)
+            java -cp UMUIS/out umuis.UMUISSelfTest
+            ;;
+        8)
             exit 0
             ;;
         *)

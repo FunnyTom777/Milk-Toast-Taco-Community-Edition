@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu title="About" width="800" height="600" background="0x202025">
+    <element type="label" x="0" y="40" width="800" height="40" text="ABOUT"
+             align="center" size="26" bold="true" color="0xFFDC32"/>
+
+    <element type="label" x="0" y="160" width="800" height="30" text="Milk Toast Taco Community Edition"
+             align="center" size="18" bold="true"/>
+    <element type="label" x="0" y="200" width="800" height="24" text="GNU General Public License v3.0"
+             align="center" size="14" color="0x64B4FF"/>
+    <element type="label" x="0" y="240" width="800" height="24" text="Menus powered by UMUIS"
+             align="center" size="14" color="0xFFDC32"/>
+
+    <element type="button" x="300" y="360" width="200" height="42" text="Back" action="back"/>
+</menu>

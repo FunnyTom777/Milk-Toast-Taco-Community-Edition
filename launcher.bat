@@ -30,6 +30,18 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo.
+echo ==========================================
+echo   Building UMUIS (Experimental)...
+echo ==========================================
+call :build_umuis
+if errorlevel 1 (
+    echo.
+    echo UMUIS BUILD FAILED. See errors above.
+    pause
+    exit /b 1
+)
+
 :menu
 cls
 echo ==========================================
@@ -41,7 +53,9 @@ echo   [2] Run MTT Dev Console
 echo   [3] Launch UMML Dashboard
 echo   [4] Run UMML Self Tests
 echo   [5] Package a Binary (jpackage)
-echo   [6] Exit
+echo   [6] Run UMUIS (Experimental)
+echo   [7] Run UMUIS Self Tests
+echo   [8] Exit
 echo.
 set /p CHOICE="Pick an option: "
 
@@ -50,7 +64,9 @@ if "%CHOICE%"=="2" goto run_dev
 if "%CHOICE%"=="3" goto umml_dashboard
 if "%CHOICE%"=="4" goto umml_tests
 if "%CHOICE%"=="5" goto package
-if "%CHOICE%"=="6" exit /b 0
+if "%CHOICE%"=="6" goto run_umuis
+if "%CHOICE%"=="7" goto umuis_tests
+if "%CHOICE%"=="8" exit /b 0
 goto menu
 
 rem ============================================================
@@ -86,6 +102,15 @@ if not defined JAREXE (
     "%JAREXE%" cf "UMML\lib\umml.jar" -C "UMML\out" umml
     echo Built UMML\lib\umml.jar
 )
+exit /b 0
+
+rem ============================================================
+rem  Build UMUIS (Experimental)
+rem ============================================================
+:build_umuis
+if not exist "UMUIS\out" mkdir "UMUIS\out"
+javac -encoding UTF-8 -d "UMUIS\out" "UMUIS\src\umuis\*.java"
+if errorlevel 1 exit /b 1
 exit /b 0
 
 rem ============================================================
@@ -136,6 +161,24 @@ echo.
 echo Running scan against Mods...
 java -cp out umml.UMMLMain "%~dp0Mods"
 popd
+echo.
+pause
+goto menu
+
+rem ============================================================
+rem  Run the UMUIS window (Experimental)
+rem ============================================================
+:run_umuis
+java -cp "UMUIS\out" umuis.UMUISMain
+echo.
+pause
+goto menu
+
+rem ============================================================
+rem  Run the UMUIS self tests
+rem ============================================================
+:umuis_tests
+java -cp "UMUIS\out" umuis.UMUISSelfTest
 echo.
 pause
 goto menu

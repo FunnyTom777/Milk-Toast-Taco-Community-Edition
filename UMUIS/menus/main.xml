@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu title="Milk Toast Taco" width="800" height="600" background="0x202025">
+    <element type="label" x="0" y="30" width="800" height="50" text="MILK TOAST TACO"
+             align="center" size="34" bold="true" color="0xFFDC32"/>
+    <element type="label" x="0" y="85" width="800" height="30" text="Community Edition"
+             align="center" size="16" color="0x64B4FF"/>
+
+    <element type="button" x="300" y="200" width="200" height="42" text="Continue" target="continue.xml"/>
+    <element type="button" x="300" y="260" width="200" height="42" text="New Game" target="newgame.xml"/>
+    <element type="button" x="300" y="320" width="200" height="42" text="Options" target="options.xml"/>
+    <element type="button" x="300" y="380" width="200" height="42" text="About" target="about.xml"/>
+    <element type="button" x="300" y="440" width="200" height="42" text="Quit" action="quit"/>
+</menu>

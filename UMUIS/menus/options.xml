@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<menu title="Options" width="800" height="600" background="0x202025">
+    <element type="label" x="0" y="40" width="800" height="40" text="OPTIONS"
+             align="center" size="26" bold="true" color="0xFFDC32"/>
+
+    <element type="button" x="300" y="180" width="200" height="42" text="Video" target="main.xml"/>
+    <element type="button" x="300" y="240" width="200" height="42" text="Audio" target="main.xml"/>
+    <element type="button" x="300" y="300" width="200" height="42" text="Controls" target="main.xml"/>
+    <element type="button" x="300" y="360" width="200" height="42" text="Back" action="back"/>
+</menu>
