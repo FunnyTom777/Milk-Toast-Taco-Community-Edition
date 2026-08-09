@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<food_items>
+    <item name="base.samwich" type="food" price="5" health="5" hunger="20" thirst="0" />
+    <item name="base.noodles_box" type="food" price="7" health="5" hunger="25" thirst="0" />
+    <item name="base.soup_can" type="food" price="3" health="5" hunger="15" thirst="0" />
+    <item name="base.water_bottle" type="drink" price="2" health="0" hunger="0" thirst="20" />
+    <item name="base.cool_drink" type="drink" price="3" health="0" hunger="0" thirst="15" />
+    <item name="base.tea" type="drink" price="4" health="0" hunger="0" thirst="10" />
+</food_items>
